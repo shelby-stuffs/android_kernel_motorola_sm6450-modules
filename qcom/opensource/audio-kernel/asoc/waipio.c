@@ -2350,6 +2350,7 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	ret = msm_populate_dai_link_component_of_node(card);
 	if (ret) {
 		ret = -EPROBE_DEFER;
+		dev_info(&pdev->dev, "%s: ret: %d: msm_populate_dai_link_component_of_node\n", __func__, ret);
 		goto err;
 	}
 
@@ -2375,6 +2376,8 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	}
 
 	ret = devm_snd_soc_register_card(&pdev->dev, card);
+	dev_info(&pdev->dev, "%s: ret: %d: devm_snd_soc_register_card\n", __func__, ret);
+
 	if (ret == -EPROBE_DEFER) {
 		dev_err(&pdev->dev, "%s: devm_snd_soc_register_card returned -EPROBE_DEFER\n",
 			__func__);
@@ -2447,6 +2450,7 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 
 	return 0;
 err:
+	dev_info(&pdev->dev, "%s: ret: %d: FAILED\n", __func__, ret);
 	devm_kfree(&pdev->dev, pdata);
 	return ret;
 }
