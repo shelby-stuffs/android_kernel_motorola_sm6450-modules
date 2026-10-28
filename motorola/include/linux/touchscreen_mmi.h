@@ -446,6 +446,7 @@ struct ts_mmi_dev_pdata {
 	bool		update_refresh_rate;
 	bool		gestures_enabled;
 	bool		cli_gestures_enabled;
+	bool		gesture_sensor_disabled;
 	bool		palm_enabled;
 	bool		fw_load_resume;
 	bool		suppression_ctrl;

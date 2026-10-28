@@ -640,10 +640,12 @@ int ts_mmi_gesture_init(struct ts_mmi_dev *touch_cdev)
 	sensor_pdata->ps_cdev.sensors_enable = ts_mmi_sensor_set_enable;
 	sensor_pdata->touch_cdev = touch_cdev;
 
-	err = sensors_classdev_register(&sensor_input_dev->dev,
-				&sensor_pdata->ps_cdev);
-	if (err)
-		goto unregister_sensor_input_device;
+	if (!touch_cdev->pdata.gesture_sensor_disabled) {
+		err = sensors_classdev_register(&sensor_input_dev->dev,
+					&sensor_pdata->ps_cdev);
+		if (err)
+			goto unregister_sensor_input_device;
+	}
 
 	/* export report gesture function to vendor */
 	touch_cdev->mdata->exports.report_gesture = ts_mmi_gesture_handler;
@@ -671,7 +673,8 @@ exit:
 
 int ts_mmi_gesture_remove(struct ts_mmi_dev *touch_cdev)
 {
-	sensors_classdev_unregister(&sensor_pdata->ps_cdev);
+	if (!touch_cdev->pdata.gesture_sensor_disabled)
+		sensors_classdev_unregister(&sensor_pdata->ps_cdev);
 	if (sensor_pdata->input_sensor_dev) {
 		input_unregister_device(sensor_pdata->input_sensor_dev);
 		input_free_device(sensor_pdata->input_sensor_dev);

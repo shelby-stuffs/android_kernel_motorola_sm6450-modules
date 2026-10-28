@@ -95,6 +95,15 @@ int ts_mmi_parse_dt(struct ts_mmi_dev *touch_cdev,
 		ppdata->cli_gestures_enabled = true;
 	}
 
+	/* Keep the gesture input device out of the sensors class, so that
+	 * userspace sensor HALs don't grab it and gesture key events reach
+	 * the input framework.
+	 */
+	if (of_property_read_bool(of_node, "mmi,disable-gesture-sensor")) {
+		dev_info(DEV_TS, "%s: gesture sensor disabled\n", __func__);
+		ppdata->gesture_sensor_disabled = true;
+	}
+
 	if (of_property_read_bool(of_node, "mmi,enable-palm")) {
 		dev_info(DEV_TS, "%s: using enable palm\n", __func__);
 		ppdata->palm_enabled = true;
