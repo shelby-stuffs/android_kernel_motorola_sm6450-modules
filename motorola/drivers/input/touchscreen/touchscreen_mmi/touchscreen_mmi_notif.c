@@ -128,6 +128,10 @@ static int ts_mmi_panel_event_handle(struct ts_mmi_dev *touch_cdev, enum ts_mmi_
 	switch (event) {
 	case TS_MMI_EVENT_PRE_DISPLAY_OFF:
 		ts_mmi_panel_off(touch_cdev);
+		/* wait for suspend to complete before the panel */
+		/* is turned off, otherwise in-cell controllers */
+		/* may fail to enter gesture mode */
+		flush_delayed_work(&touch_cdev->work);
 		break;
 
 	case TS_MMI_EVENT_DISPLAY_OFF:
