@@ -720,9 +720,6 @@ static void cts_update_tp_module_info(void)
 	cts_info("Found module: ini fw name = %s", g_cts_data->config_fw_name);
 
 	g_cts_data->tp_module = module;
-	if (g_cts_data->config_fw_name)
-		strlcpy(g_cts_data->cts_dev.config_fw_name, g_cts_data->config_fw_name,
-			sizeof(g_cts_data->cts_dev.config_fw_name));
 }
 
 
