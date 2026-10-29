@@ -11,4 +11,3 @@ anc_fps_mmi-y += jiiov_platform.o jiiov_netlink.o custom.o
 
 obj-m += anc_fps_mmi.o
 
-KBUILD_EXTRA_SYMBOLS += $(CURDIR)/$(KBUILD_EXTMOD)/../../../mmi_relay/$(GKI_OBJ_MODULE_DIR)/Module.symvers
