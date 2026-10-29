@@ -720,6 +720,9 @@ static void cts_update_tp_module_info(void)
 	cts_info("Found module: ini fw name = %s", g_cts_data->config_fw_name);
 
 	g_cts_data->tp_module = module;
+	if (g_cts_data->config_fw_name)
+		strlcpy(g_cts_data->cts_dev.config_fw_name, g_cts_data->config_fw_name,
+			sizeof(g_cts_data->cts_dev.config_fw_name));
 }
 
 
@@ -729,6 +732,17 @@ void cts_parse_tp_module(void)
 	int tp_module = 0;
 
 #ifdef CTS_TP_MODULE_EN
+	if (!active_panel_name) {
+		struct device_node *chosen = of_find_node_by_path("/chosen");
+		if (chosen) {
+			const char *pname = NULL;
+			if (!of_property_read_string(chosen, "mmi,panel_name", &pname) && pname) {
+				active_panel_name = pname;
+				cts_info("Got active_panel_name from /chosen: %s", active_panel_name);
+			}
+			of_node_put(chosen);
+		}
+	}
 	if(active_panel_name) {
 		if (strstr(active_panel_name, "tm") || strstr(active_panel_name, "tianma")) {
 			tp_module = MODEL_TM;

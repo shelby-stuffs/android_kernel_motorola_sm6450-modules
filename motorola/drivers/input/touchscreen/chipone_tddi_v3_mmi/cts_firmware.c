@@ -654,6 +654,16 @@ const struct cts_firmware *cts_request_newer_firmware_from_fs(
         cts_info("Filepath is only filename, use request_firmware()");
         ret = cts_wrap_request_firmware(firmware, filepath,
             &cts_dev->pdata->ts_input_dev->dev, curr_version);
+        if (ret && strcmp(filepath, BOE_FW_REQUEST_NAME) != 0 && strcmp(filepath, CSOT_FW_REQUEST_NAME) != 0) {
+            cts_info("Fallback: trying " BOE_FW_REQUEST_NAME);
+            ret = cts_wrap_request_firmware(firmware, BOE_FW_REQUEST_NAME,
+                &cts_dev->pdata->ts_input_dev->dev, curr_version);
+            if (ret) {
+                cts_info("Fallback: trying " CSOT_FW_REQUEST_NAME);
+                ret = cts_wrap_request_firmware(firmware, CSOT_FW_REQUEST_NAME,
+                    &cts_dev->pdata->ts_input_dev->dev, curr_version);
+            }
+        }
     }
 
     if (ret) {
@@ -731,7 +741,7 @@ const struct cts_firmware *cts_request_firmware(const struct cts_device *cts_dev
 #ifdef CFG_CTS_FW_UPDATE_FILE_LOAD
         cts_dev->config_fw_name[0] ? cts_dev->config_fw_name : CFG_CTS_FIRMWARE_FILENAME,
 #else
-        g_cts_data->config_fw_name,/*CFG_CTS_FIRMWARE_FILENAME,*/
+        (g_cts_data && g_cts_data->config_fw_name) ? g_cts_data->config_fw_name : CFG_CTS_FIRMWARE_FILENAME,
 #endif
         firmware_builtin ? FIRMWARE_VERSION(firmware_builtin) : curr_firmware_ver);
 #endif /* CFG_CTS_FIRMWARE_IN_FS */

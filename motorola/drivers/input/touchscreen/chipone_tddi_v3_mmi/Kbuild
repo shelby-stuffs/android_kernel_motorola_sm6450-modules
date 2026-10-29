@@ -2,6 +2,12 @@
 EXTRA_CFLAGS += -Wall
 EXTRA_CFLAGS += -I$(KERNEL_SRC)/../sm6450-modules/motorola/include \
 		-I$(KERNEL_SRC)/../sm6450-modules/motorola/drivers/input/touchscreen/chipone_tddi_v3_mmi
+
+EXTRA_CFLAGS += -DCTS_TP_MODULE_EN
+EXTRA_CFLAGS += -DTOUCHSCREEN_PM_BRL_SPI
+EXTRA_CFLAGS += -DCONFIG_CTS_ESD_PROTECTION
+EXTRA_CFLAGS += -DCHIPONE_SET_TOUCH_STATE
+
 ifneq ($(filter m y,$(CONFIG_CHIPONE_ESD)),)
 EXTRA_CFLAGS += -DCONFIG_CTS_ESD_PROTECTION
 endif
