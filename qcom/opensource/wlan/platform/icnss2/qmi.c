@@ -185,11 +185,12 @@ static int get_moto_device(void)
 	char *bootdevice = NULL;
 	int rc = 0;
 	rc = cnss_get_bootarg_dt("androidboot.device=", &bootdevice, "mmi,bootconfig", "\n");
-	if (rc || !bootdevice){
-		icnss_pr_err("device string is error");
-		return -ENOMEM;
+	if (rc || !bootdevice || !bootdevice[0]){
+		icnss_pr_info("device string is error, defaulting to mumba\n");
+		strlcpy(device_ptr, "mumba", MOTO_STRING_LEN);
+		return 0;
 	}else{
-		strlcpy(device_ptr, bootdevice,MOTO_STRING_LEN);
+		strlcpy(device_ptr, bootdevice, MOTO_STRING_LEN);
 		return 0;
 	}
 }
@@ -199,11 +200,12 @@ static int get_moto_radio(void)
 	char *radiodevice = NULL;
 	int rc = 0;
 	rc = cnss_get_bootarg_dt("androidboot.radio=", &radiodevice, "mmi,bootconfig", "\n");
-	if (rc || !radiodevice){
-		icnss_pr_err("radio string is error");
-		return -ENOMEM;
+	if (rc || !radiodevice || !radiodevice[0]){
+		icnss_pr_info("radio string is error, defaulting to all\n");
+		strlcpy(radio_ptr, "all", MOTO_STRING_LEN);
+		return 0;
 	}else{
-		strlcpy(radio_ptr, radiodevice,MOTO_STRING_LEN);
+		strlcpy(radio_ptr, radiodevice, MOTO_STRING_LEN);
 		return 0;
 	}
 }
@@ -232,7 +234,9 @@ static int selectFileNameByProduct(struct icnss_priv *plat_priv, char *filename,
 					ret = 1;
 					break;
 				} else if (ICNSS_BDF_BIN == bdf_type) {
-					if (plat_priv->chip_info.chip_id == UMC_CHIP_ID) {
+					if (plat_priv->chip_info.chip_id == UMC_CHIP_ID &&
+					    strcmp((products_list+i)->hw_device, "mumba") != 0 &&
+					    strcmp((products_list+i)->hw_device, "mumbai") != 0) {
 						sprintf(filename, "adrastea/%su_%s_%s.bin", BDF_FILE_NAME_PREFIX,
 							(products_list+i)->hw_device, (products_list+i)->nv_name);
 					} else {
@@ -1355,6 +1359,11 @@ int icnss_wlfw_bdf_dnld_send_sync(struct icnss_priv *priv, u32 bdf_type)
 		goto err_req_fw;
 
 	ret = firmware_request_nowarn(&fw_entry, filename, &priv->pdev->dev);
+	if (ret && bdf_type == ICNSS_BDF_BIN) {
+		icnss_pr_info("Failed to load %s, trying fallback adrastea/bdwlan_mumba_ipa.bin\n", filename);
+		snprintf(filename, sizeof(filename), "adrastea/bdwlan_mumba_ipa.bin");
+		ret = firmware_request_nowarn(&fw_entry, filename, &priv->pdev->dev);
+	}
 	if (ret) {
 		icnss_pr_err("Failed to load %s: %s ret:%d\n",
 			     icnss_bdf_type_to_str(bdf_type), filename, ret);
