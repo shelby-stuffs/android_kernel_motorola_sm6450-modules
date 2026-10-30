@@ -1434,7 +1434,7 @@ static void __exit ilitek_plat_dev_exit(void)
 	ili_dev_remove(ENABLE);
 }
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
-MODULE_SOFTDEP("pre:msm_drm");
+MODULE_SOFTDEP("pre: msm_drm");
 late_initcall(ilitek_plat_dev_init);
 #else/*kernel 5.15*/
 #if defined(__DRM_PANEL_H__) && defined(DRM_PANEL_EARLY_EVENT_BLANK)
