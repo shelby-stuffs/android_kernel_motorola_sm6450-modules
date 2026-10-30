@@ -92,6 +92,7 @@ static QDF_STATUS hif_verify_basic_ops(struct hif_softc *hif_sc)
 
 	for (i = 0; i < NUM_OPS; i++) {
 		if (!ops_array[i]) {
+			pr_err("[CLD_PROBE] hif_verify_basic_ops: ops_array[%d] is null\n", i);
 			hif_err("ops_array[%d] is null", i);
 			status = QDF_STATUS_E_NOSUPPORT;
 		}
@@ -163,13 +164,16 @@ QDF_STATUS hif_bus_open(struct hif_softc *hif_sc,
 	}
 
 	if (status != QDF_STATUS_SUCCESS) {
+		pr_err("[CLD_PROBE] hif_bus_open: bus_type: %d not supported, status: %d\n", bus_type, status);
 		hif_err("bus_type: %d not supported", bus_type);
 		return status;
 	}
 
 	status = hif_verify_basic_ops(hif_sc);
-	if (status != QDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS) {
+		pr_err("[CLD_PROBE] hif_bus_open: hif_verify_basic_ops failed: %d\n", status);
 		return status;
+	}
 
 	return hif_sc->bus_ops.hif_bus_open(hif_sc, bus_type);
 }
