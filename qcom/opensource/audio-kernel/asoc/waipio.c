@@ -2280,6 +2280,7 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	struct snd_soc_card *card = NULL;
 	struct msm_asoc_mach_data *pdata = NULL;
 	int ret = 0;
+	int i, j;
 	struct clk *lpass_audio_hw_vote = NULL;
 
 	if (!pdev->dev.of_node) {
@@ -2355,8 +2356,28 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	/* parse upd configuration */
 	msm_parse_upd_configuration(pdev, pdata);
 
+	for (i = 0; i < card->num_links; i++) {
+		struct snd_soc_dai_link *link = &card->dai_link[i];
+		for (j = 0; j < link->num_cpus; j++) {
+			if (!snd_soc_find_dai_with_mutex(&link->cpus[j])) {
+				dev_err(&pdev->dev, "%s: MISSING CPU DAI: link '%s', dai '%s', name '%s'\n",
+					__func__, link->name, link->cpus[j].dai_name,
+					link->cpus[j].name ? link->cpus[j].name : (link->cpus[j].of_node ? link->cpus[j].of_node->name : "none"));
+			}
+		}
+		for (j = 0; j < link->num_codecs; j++) {
+			if (!snd_soc_find_dai_with_mutex(&link->codecs[j])) {
+				dev_err(&pdev->dev, "%s: MISSING CODEC DAI: link '%s', dai '%s', name '%s'\n",
+					__func__, link->name, link->codecs[j].dai_name,
+					link->codecs[j].name ? link->codecs[j].name : (link->codecs[j].of_node ? link->codecs[j].of_node->name : "none"));
+			}
+		}
+	}
+
 	ret = devm_snd_soc_register_card(&pdev->dev, card);
 	if (ret == -EPROBE_DEFER) {
+		dev_err(&pdev->dev, "%s: devm_snd_soc_register_card returned -EPROBE_DEFER\n",
+			__func__);
 		if (codec_reg_done)
 			ret = -EINVAL;
 		goto err;
