@@ -4628,12 +4628,13 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 				   (reinit == true) ?  HIF_ENABLE_TYPE_REINIT :
 				   HIF_ENABLE_TYPE_PROBE);
 		if (ret) {
-			hdd_err("Failed to open hif; errno: %d", ret);
+			pr_err("[CLD_PROBE] hdd_wlan_start_modules: hdd_hif_open failed: %d\n", ret);
 			goto power_down;
 		}
 
 		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 		if (!hif_ctx) {
+			pr_err("[CLD_PROBE] hdd_wlan_start_modules: hif_ctx is NULL\n");
 			ret = -EINVAL;
 			goto power_down;
 		}
@@ -4642,9 +4643,9 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 
 		status = ol_cds_init(qdf_dev, hif_ctx);
 		if (status != QDF_STATUS_SUCCESS) {
-			hdd_err("No Memory to Create BMI Context; status: %d",
-				status);
 			ret = qdf_status_to_os_return(status);
+			pr_err("[CLD_PROBE] hdd_wlan_start_modules: ol_cds_init failed: status=%d ret=%d\n",
+			       status, ret);
 			goto hif_close;
 		}
 
@@ -13763,17 +13764,20 @@ struct hdd_context *hdd_context_create(struct device *dev)
 	hdd_override_ini_config(hdd_ctx);
 
 	ret = hdd_context_init(hdd_ctx);
-
-	if (ret)
+	if (ret) {
+		pr_err("[CLD_PROBE] hdd_context_create: hdd_context_init failed: %d\n", ret);
 		goto err_hdd_objmgr_destroy;
+	}
 
 	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE)
 		goto skip_multicast_logging;
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 	ret = hdd_init_netlink_services(hdd_ctx);
-	if (ret)
+	if (ret) {
+		pr_err("[CLD_PROBE] hdd_context_create: hdd_init_netlink_services failed: %d\n", ret);
 		goto err_deinit_hdd_context;
+	}
 
 	hdd_set_wlan_logging(hdd_ctx);
 	qdf_atomic_init(&hdd_ctx->adapter_ops_history.index);
@@ -16429,20 +16433,19 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	hdd_dp_trace_init(hdd_ctx->config);
 	errno = wlan_hdd_alloc_iface_combination_mem(hdd_ctx);
 	if (errno) {
-		hdd_err("failed to alloc iface combination mem");
+		pr_err("[CLD_PROBE] hdd_wlan_startup: wlan_hdd_alloc_iface_combination_mem failed: %d\n", errno);
 		goto memdump_deinit;
 	}
 
 	errno = hdd_init_regulatory_update_event(hdd_ctx);
 	if (errno) {
-		hdd_err("Failed to initialize regulatory update event; errno:%d",
-			errno);
+		pr_err("[CLD_PROBE] hdd_wlan_startup: hdd_init_regulatory_update_event failed: %d\n", errno);
 		goto free_iface_comb;
 	}
 
 	errno = hdd_wlan_start_modules(hdd_ctx, false);
 	if (errno) {
-		hdd_err("Failed to start modules; errno:%d", errno);
+		pr_err("[CLD_PROBE] hdd_wlan_startup: hdd_wlan_start_modules failed: %d\n", errno);
 		goto free_iface_comb;
 	}
 
@@ -16452,24 +16455,26 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	wlan_hdd_update_wiphy(hdd_ctx);
 
 	hdd_ctx->mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!hdd_ctx->mac_handle)
+	if (!hdd_ctx->mac_handle) {
+		pr_err("[CLD_PROBE] hdd_wlan_startup: mac_handle is NULL\n");
 		goto stop_modules;
+	}
 
 	errno = hdd_wiphy_init(hdd_ctx);
 	if (errno) {
-		hdd_err("Failed to initialize wiphy; errno:%d", errno);
+		pr_err("[CLD_PROBE] hdd_wlan_startup: hdd_wiphy_init failed: %d\n", errno);
 		goto stop_modules;
 	}
 
 	errno = hdd_initialize_mac_address(hdd_ctx);
 	if (errno) {
-		hdd_err("MAC initializtion failed: %d", errno);
+		pr_err("[CLD_PROBE] hdd_wlan_startup: hdd_initialize_mac_address failed: %d\n", errno);
 		goto unregister_wiphy;
 	}
 
 	errno = register_netdevice_notifier(&hdd_netdev_notifier);
 	if (errno) {
-		hdd_err("register_netdevice_notifier failed; errno:%d", errno);
+		pr_err("[CLD_PROBE] hdd_wlan_startup: register_netdevice_notifier failed: %d\n", errno);
 		goto unregister_wiphy;
 	}
 

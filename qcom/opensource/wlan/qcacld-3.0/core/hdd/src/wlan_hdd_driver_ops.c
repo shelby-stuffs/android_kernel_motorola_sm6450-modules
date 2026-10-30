@@ -390,19 +390,19 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 
 	hif_ctx = hif_open(qdf_ctx, mode, bus_type, &cbk, hdd_ctx->psoc);
 	if (!hif_ctx) {
-		hdd_err("hif_open error");
+		pr_err("[CLD_PROBE] hdd_hif_open: hif_open error\n");
 		return -ENOMEM;
 	}
 
 	ret = hdd_init_cds_hif_context(hif_ctx);
 	if (ret) {
-		hdd_err("Failed to set global HIF CDS Context err: %d", ret);
+		pr_err("[CLD_PROBE] hdd_hif_open: Failed to set global HIF CDS Context err: %d\n", ret);
 		goto err_hif_close;
 	}
 
 	status = hdd_hif_register_shutdown_notifier(hif_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("Shutdown notifier register failed: %d", status);
+		pr_err("[CLD_PROBE] hdd_hif_open: Shutdown notifier register failed: %d\n", status);
 		goto err_deinit_hif_context;
 	}
 
@@ -412,10 +412,9 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 			    (reinit == true) ?  HIF_ENABLE_TYPE_REINIT :
 			    HIF_ENABLE_TYPE_PROBE);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("hif_enable failed status: %d, reinit: %d",
-			status, reinit);
-
 		ret = qdf_status_to_os_return(status);
+		pr_err("[CLD_PROBE] hdd_hif_open: hif_enable failed status: %d, ret: %d\n",
+		       status, ret);
 		goto err_deinit_hif_context;
 	} else {
 		cds_set_target_ready(true);
@@ -594,6 +593,9 @@ static int __hdd_soc_probe(struct device *dev,
 	QDF_STATUS status;
 	int errno;
 
+	pr_err("[CLD_PROBE] __hdd_soc_probe: start dev=%px bdev=%px bus_type=%d\n",
+	       dev, bdev, bus_type);
+
 	hdd_info("probing driver");
 
 	hdd_soc_load_lock(dev);
@@ -602,35 +604,50 @@ static int __hdd_soc_probe(struct device *dev,
 	cds_set_recovery_in_progress(false);
 
 	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
-	if (errno)
+	if (errno) {
+		pr_err("[CLD_PROBE] hdd_init_qdf_ctx failed: %d\n", errno);
 		goto unlock;
+	}
 
 	errno = hdd_init_dma_mask(dev, bus_type);
-	if (errno)
+	if (errno) {
+		pr_err("[CLD_PROBE] hdd_init_dma_mask failed: %d\n", errno);
 		goto unlock;
+	}
 
 	hdd_ctx = hdd_context_create(dev);
 	if (IS_ERR(hdd_ctx)) {
 		errno = PTR_ERR(hdd_ctx);
+		pr_err("[CLD_PROBE] hdd_context_create failed: %d\n", errno);
 		goto assert_fail_count;
 	}
+	pr_err("[CLD_PROBE] hdd_context_create ok\n");
 
 	status = dp_prealloc_init((struct cdp_ctrl_objmgr_psoc *)hdd_ctx->psoc);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		errno = qdf_status_to_os_return(status);
+		pr_err("[CLD_PROBE] dp_prealloc_init failed: status=%d errno=%d\n",
+		       status, errno);
 		goto dp_prealloc_fail;
 	}
+	pr_err("[CLD_PROBE] dp_prealloc_init ok\n");
 
 	errno = hdd_wlan_startup(hdd_ctx);
-	if (errno)
+	if (errno) {
+		pr_err("[CLD_PROBE] hdd_wlan_startup failed: %d\n", errno);
 		goto hdd_context_destroy;
+	}
+	pr_err("[CLD_PROBE] hdd_wlan_startup ok\n");
 
 	status = hdd_psoc_create_vdevs(hdd_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		errno = qdf_status_to_os_return(status);
+		pr_err("[CLD_PROBE] hdd_psoc_create_vdevs failed: status=%d errno=%d\n",
+		       status, errno);
 		goto wlan_exit;
 	}
+	pr_err("[CLD_PROBE] hdd_psoc_create_vdevs ok\n");
 
 	probe_fail_cnt = 0;
 	cds_set_driver_loaded(true);
